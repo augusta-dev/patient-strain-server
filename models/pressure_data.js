@@ -1,8 +1,16 @@
 const mongoose = require("mongoose");
-const patientSchema = new mongoose.Schema(
-	{ patient_name: String, pressure_values: Array },
+
+const pressureSchema = new mongoose.Schema(
+	{
+		patient_name: { type: String, required: true },
+		pressure_values: [
+			{
+				value: Number,
+				date: String,
+			},
+		],
+	},
 	{ timestamps: true },
 );
 
-const Patient = mongoose.models.Patient || mongoose.model("Patient", patientSchema);
-module.exports = Patient;
+module.exports = mongoose.models.Patient || mongoose.model("Patient", pressureSchema);
