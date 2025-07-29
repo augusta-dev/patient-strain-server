@@ -6,8 +6,7 @@ const pressureSchema = new mongoose.Schema(
 		pressure_values: [
 			{
 				value: Number,
-				date: String,
-			},
+				date: String,	},
 		],
 	},
 	{ timestamps: true },
