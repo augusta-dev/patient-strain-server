@@ -82,7 +82,7 @@ app.post("/api/alert", async (req, res) => {
 				$push: {
 					pressure_values: {
 						value: pressure,
-						date: date.replace(',', ''),
+						date: date.replaceAll(',', ''),
 					},
 				},
 			},
