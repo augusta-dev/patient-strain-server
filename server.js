@@ -93,8 +93,7 @@ app.post("/api/alert", async (req, res) => {
 		clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
 				client.send(JSON.stringify({ name, pressure }));
-			}
-			s;
+			};
 		});
 
 		res.status(200).json({ success: true });
