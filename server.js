@@ -43,16 +43,16 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/list", async (req, res) => {
-  try {
-    const list = await Patient.find({});
-    res.json({ list, status: 200 });
-  } catch (error) {
-    console.error("Error fetching patient list:", error);
-    res.status(501).json({
-      message: "Error in fetching list" + error,
-      status: 501,
-    });
-  }
+	try {
+		const list = await Patient.find({});
+		res.json({ list, status: 200 });
+	} catch (error) {
+		console.error("Error fetching patient list:", error);
+		res.status(501).json({
+			message: "Error in fetching list" + error,
+			status: 501,
+		});
+	}
 });
 
 app.post("/api/alert", async (req, res) => {
@@ -64,25 +64,37 @@ app.post("/api/alert", async (req, res) => {
 			return res.status(400).json({ message: "Invalid data" });
 		}
 
-		const date = new Date();
+		const date = new Date().toLocaleString("en-US", {
+			timeZone: "Europe/Istanbul",
+			weekday: "short",
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+
 		await Patient.updateOne(
 			{ patient_name: name },
 			{
 				$push: {
 					pressure_values: {
 						value: pressure,
-						date: date.toString(),
+						date: date.replace(',', ''),
 					},
 				},
 			},
 			{ upsert: true },
 		);
-		console.log("Patient Schema Updated")
+		console.log("Patient Schema Updated");
 
 		clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
 				client.send(JSON.stringify({ name, pressure }));
-			}s
+			}
+			s;
 		});
 
 		res.status(200).json({ success: true });
