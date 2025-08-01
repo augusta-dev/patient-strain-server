@@ -77,6 +77,7 @@ app.post("/api/alert", async (req, res) => {
 			},
 			{ upsert: true },
 		);
+		console.log("Patient Schema Updated")
 
 		clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
