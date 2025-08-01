@@ -1,45 +1,36 @@
+// server.js
 require("dotenv").config();
-const fs = require("fs");
-const https = require("https");
 const express = require("express");
 const WebSocket = require("ws");
-const bodyParser = require("body-parser");
-const cors = require("cors");
 const mongoose = require("mongoose");
-const app = express();
+const cors = require("cors");
+const bodyParser = require("body-parser");
 const Patient = require("./models/pressure_data");
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// MongoDB connection using Mongoose
+// MongoDB Connection
 mongoose
-	.connect(MONGODB_URI, {
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
-	})
+	.connect(process.env.MONGODB_URI)
 	.then(() => console.log("✅ Connected to MongoDB"))
 	.catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Load your SSL certificate and key
-const server = https.createServer(
-	{
-		cert: fs.readFileSync("./cert.pem"), // Your cert file
-		key: fs.readFileSync("./key.pem"), // Your private key
-	},
-	app,
-);
-
-// Use middlewares
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Create WSS server on top of HTTPS
+// HTTP server for WebSocket upgrade
+const server = app.listen(PORT, () => {
+	console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
 const wss = new WebSocket.Server({ server });
 
 let clients = [];
 
-wss.on("connection", function connection(ws) {
-	console.log("React client connected via WSS");
+wss.on("connection", (ws) => {
+	console.log("✅ WebSocket client connected");
 	clients.push(ws);
 
 	ws.on("close", () => {
@@ -47,21 +38,19 @@ wss.on("connection", function connection(ws) {
 	});
 });
 
-// HTTPS POST endpoint to receive alerts from ESP32
-//
 app.get("/", (req, res) => {
-	res.send("Server is up");
+	res.send("Server is up and running.");
 });
+
 app.post("/api/alert", async (req, res) => {
 	try {
 		const { name, pressure } = req.body;
-		console.log(`Received alert from ${name} with force ${pressure}N`);
-		console.log("Request body:", req.body);
+		console.log(`Received: ${name} - ${pressure}`);
 
-		// Save to MongoDB
 		if (!name || pressure === 0) {
 			return res.status(400).json({ message: "Invalid data" });
 		}
+
 		const date = new Date();
 		await Patient.updateOne(
 			{ patient_name: name },
@@ -76,24 +65,15 @@ app.post("/api/alert", async (req, res) => {
 			{ upsert: true },
 		);
 
-		// Broadcast to all WSS clients
 		clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
 				client.send(JSON.stringify({ name, pressure }));
-			}
+			}s
 		});
 
 		res.status(200).json({ success: true });
 	} catch (error) {
-		console.error("Error processing alert:", error);
-		res.status(500).json({
-			success: false,
-			error: "Internal Server Error",
-		});
+		console.error("Error:", error);
+		res.status(500).json({ error: "Internal server error" });
 	}
-});
-
-const PORT = 3000;
-server.listen(PORT, () => {
-	console.log(`Secure WSS+HTTPS server running at https://localhost:${PORT}`);
 });
