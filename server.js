@@ -58,18 +58,17 @@ app.post("/api/alert", async (req, res) => {
 				$push: {
 					pressure_values: {
 						value: pressure,
-						date: date.toISOString(),
+						date: date.toString(),
 					},
 				},
 			},
 			{ upsert: true },
 		);
-		console.log("Patient Schema Updated")
 
 		clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
 				client.send(JSON.stringify({ name, pressure }));
-			}
+			}s
 		});
 
 		res.status(200).json({ success: true });
