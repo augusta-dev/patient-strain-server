@@ -42,6 +42,19 @@ app.get("/", (req, res) => {
 	res.send("Server is up and running.");
 });
 
+app.get("/api/list", async (req, res) => {
+  try {
+    const list = await Patient.find({});
+    res.json({ list, status: 200 });
+  } catch (error) {
+    console.error("Error fetching patient list:", error);
+    res.status(501).json({
+      message: "Error in fetching list" + error,
+      status: 501,
+    });
+  }
+});
+
 app.post("/api/alert", async (req, res) => {
 	try {
 		const { name, pressure } = req.body;
